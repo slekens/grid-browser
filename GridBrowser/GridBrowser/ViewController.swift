@@ -78,6 +78,12 @@ private extension ViewController {
         }
         select(webView: newSelectedView)
     }
+    
+    func selectAddressEntry() {
+        if let windowController = view.window?.windowController as? WindowController {
+            windowController.window?.makeFirstResponder(windowController.addressEntry)
+        }
+    }
 }
 
 // MARK: - Actions
@@ -135,6 +141,14 @@ extension ViewController {
             }
         }
     }
+    @IBAction func reloadWebPage(_ sender: NSButton) {
+        guard let selected = selectedWebView else { return }
+        if selected.isLoading {
+            selected.stopLoading()
+        } else {
+            selected.reload()
+        }
+    }
 }
 
 // MARK: - WKNavigation Delegate
@@ -144,6 +158,27 @@ extension ViewController: WKNavigationDelegate {
         guard webView == selectedWebView else { return }
         if let windowController = view.window?.windowController as? WindowController {
             windowController.addressEntry.stringValue = webView.url?.absoluteString ?? ""
+        }
+    }
+    
+    func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
+        guard webView == selectedWebView else { return }
+        if let windowController = view.window?.windowController as? WindowController {
+            windowController.reloadButton.image = NSImage(named: NSImage.stopProgressTemplateName)
+        }
+    }
+    
+    func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+        guard webView == selectedWebView else { return }
+        if let windowController = view.window?.windowController as? WindowController {
+            windowController.reloadButton.image = NSImage(named: NSImage.refreshTemplateName)
+        }
+    }
+    
+    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        guard webView == selectedWebView else { return }
+        if let windowController = view.window?.windowController as? WindowController {
+            windowController.reloadButton.image = NSImage(named: NSImage.refreshTemplateName)
         }
     }
 }
@@ -156,5 +191,87 @@ extension ViewController: NSGestureRecognizerDelegate {
         } else {
             return true
         }
+    }
+}
+
+// MARK: - Touch Bar
+
+extension NSTouchBarItem.Identifier {
+    static let navigation = NSTouchBarItem.Identifier("com.slekens.grid-browser.navigation")
+    static let enterAddress = NSTouchBarItem.Identifier("com.slekens.grid-browser.enterAddress")
+    static let sharingPicker = NSTouchBarItem.Identifier("com.slekens.grid-browser.sharingPicker")
+    static let adjustGrid = NSTouchBarItem.Identifier("com.slekens.grid-browser.adjustGrid")
+    static let adjustRows = NSTouchBarItem.Identifier("com.slekens.grid-browser.adjustRows")
+    static let adjustCols = NSTouchBarItem.Identifier("com.slekens.grid-browser.adjustCols")
+}
+
+extension ViewController: NSTouchBarDelegate {
+    @available(OSX 10.12.2, *)
+    func touchBar(_ touchBar: NSTouchBar, makeItemForIdentifier identifier: NSTouchBarItem.Identifier) -> NSTouchBarItem? {
+        switch identifier {
+        case NSTouchBarItem.Identifier.enterAddress:
+            let button = NSButton(title: "Enter a URL", target: self, action: #selector(selectAddressEntry))
+            let customTouchBarItem = NSCustomTouchBarItem(identifier: identifier)
+            customTouchBarItem.view = button
+            return customTouchBarItem
+        case NSTouchBarItem.Identifier.navigation:
+            let back = NSImage(named: NSImage.touchBarGoBackTemplateName)!
+            let forward = NSImage(named: NSImage.touchBarGoForwardTemplateName)!
+            let segmentedControl = NSSegmentedControl(images: [back, forward], trackingMode: .momentary, target: self, action: #selector(navigationClicked))
+            let customTouchBarItem = NSCustomTouchBarItem(identifier: identifier)
+            customTouchBarItem.view = segmentedControl
+            return customTouchBarItem
+        case NSTouchBarItem.Identifier.sharingPicker:
+            let picker = NSSharingServicePickerTouchBarItem(identifier: identifier)
+            picker.delegate = self
+            return picker
+        case NSTouchBarItem.Identifier.adjustRows:
+            let control = NSSegmentedControl(labels: ["Add Row", "Remove Row"], trackingMode: .momentaryAccelerator, target: self, action: #selector(adjustRows))
+            let customTouchBarItem = NSCustomTouchBarItem(identifier: identifier)
+            customTouchBarItem.customizationLabel = "Rows"
+            customTouchBarItem.view = control
+            return customTouchBarItem
+        case NSTouchBarItem.Identifier.adjustCols:
+            let control = NSSegmentedControl(labels: ["Add Column", "Remove Column"], trackingMode: .momentaryAccelerator, target: self, action: #selector(adjustColumns))
+            let customTouchBarItem = NSCustomTouchBarItem(identifier: identifier)
+            customTouchBarItem.customizationLabel = "Columns"
+            customTouchBarItem.view = control
+            return customTouchBarItem
+        case NSTouchBarItem.Identifier.adjustGrid:
+            let popover = NSPopoverTouchBarItem(identifier: identifier)
+            popover.collapsedRepresentationLabel = "Grid"
+            popover.customizationLabel = "Adjust Grid"
+            popover.popoverTouchBar = NSTouchBar()
+            popover.popoverTouchBar.delegate = self
+            popover.popoverTouchBar.defaultItemIdentifiers = [.adjustRows, .adjustCols]
+            return popover
+        default:
+            return nil
+        }
+    }
+    @available(OSX 10.12.2, *)
+    override func makeTouchBar() -> NSTouchBar? {
+        NSApp.isAutomaticCustomizeTouchBarMenuItemEnabled = true
+        
+        let touchBar = NSTouchBar()
+        touchBar.customizationIdentifier = NSTouchBar.CustomizationIdentifier("com.slekens.grid-browser")
+        touchBar.delegate = self
+        
+        touchBar.defaultItemIdentifiers = [.navigation, .adjustGrid, .enterAddress, .sharingPicker]
+        touchBar.principalItemIdentifier = .enterAddress
+        touchBar.customizationAllowedItemIdentifiers = [.sharingPicker, .adjustGrid, .adjustCols, .adjustRows]
+        touchBar.customizationRequiredItemIdentifiers = [.enterAddress]
+        
+        return touchBar
+    }
+}
+
+extension ViewController: NSSharingServicePickerTouchBarItemDelegate {
+    
+    @available(OSX 10.12.2, *)
+    func items(for pickerTouchBarItem: NSSharingServicePickerTouchBarItem) -> [Any] {
+        guard let webView = selectedWebView else { return [] }
+        guard let url = webView.url?.absoluteString else { return [] }
+        return [url]
     }
 }

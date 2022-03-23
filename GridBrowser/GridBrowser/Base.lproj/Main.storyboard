@@ -786,11 +786,27 @@
                                         </textFieldCell>
                                     </textField>
                                 </toolbarItem>
+                                <toolbarItem implicitItemIdentifier="FF982F87-7174-4931-B020-622B930AB3BC" label="" paletteLabel="" image="NSRefreshTemplate" sizingBehavior="auto" id="fzE-vl-eNV">
+                                    <nil key="toolTip"/>
+                                    <button key="view" verticalHuggingPriority="750" id="QPi-DN-dON">
+                                        <rect key="frame" x="0.0" y="14" width="127" height="25"/>
+                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                        <buttonCell key="cell" type="roundTextured" bezelStyle="texturedRounded" image="NSRefreshTemplate" imagePosition="only" alignment="center" lineBreakMode="truncatingTail" state="on" imageScaling="proportionallyDown" inset="2" id="fDx-gq-rhZ">
+                                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                            <font key="font" metaFont="system"/>
+                                        </buttonCell>
+                                        <connections>
+                                            <action selector="reloadWebPage:" target="Oky-zY-oP4" id="6W0-hY-FLo"/>
+                                        </connections>
+                                    </button>
+                                </toolbarItem>
                             </allowedToolbarItems>
                             <defaultToolbarItems>
                                 <toolbarItem reference="8hg-vl-yDg"/>
                                 <toolbarItem reference="i1A-Nl-9JF"/>
                                 <toolbarItem reference="LCY-qz-aNh"/>
+                                <toolbarItem reference="i1A-Nl-9JF"/>
+                                <toolbarItem reference="fzE-vl-eNV"/>
                                 <toolbarItem reference="i1A-Nl-9JF"/>
                                 <toolbarItem reference="709-Sb-p3m"/>
                                 <toolbarItem reference="Z0B-mE-clN"/>
@@ -800,11 +816,12 @@
                             </defaultToolbarItems>
                         </toolbar>
                         <connections>
-                            <outlet property="delegate" destination="B8D-0N-5wS" id="98r-iN-zZc"/>
+                            <outlet property="delegate" destination="B8D-0N-5wS" id="VGE-an-TXj"/>
                         </connections>
                     </window>
                     <connections>
                         <outlet property="addressEntry" destination="pPp-lv-qPQ" id="PFA-cD-Xxa"/>
+                        <outlet property="reloadButton" destination="QPi-DN-dON" id="iCT-r8-mv3"/>
                         <segue destination="XfG-lQ-9wD" kind="relationship" relationship="window.shadowedContentViewController" id="cq2-FE-JQM"/>
                     </connections>
                 </windowController>
@@ -830,6 +847,7 @@
         <image name="NSAddTemplate" width="15" height="13"/>
         <image name="NSGoLeftTemplate" width="10" height="14"/>
         <image name="NSGoRightTemplate" width="10" height="14"/>
+        <image name="NSRefreshTemplate" width="14" height="16"/>
         <image name="NSRemoveTemplate" width="15" height="4"/>
     </resources>
 </document>
